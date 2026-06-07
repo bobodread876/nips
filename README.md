@@ -110,6 +110,7 @@ NIPs listed here are not a protocol checklist. Nothing forces any software to im
 - [NIP-A4: Public Messages](A4.md)
 - [NIP-B0: Web Bookmarks](B0.md)
 - [NIP-B7: Blossom](B7.md)
+- [NIP-BD: Agent Bonds](BD.md)
 - ~~[NIP-BE: Nostr BLE Communications Protocol](BE.md) --- **unrecommended**: only implemented once and unclear whether it works, requires review~~
 - [NIP-C0: Code Snippets](C0.md)
 - [NIP-CC: Geocaching](CC.md)
@@ -171,6 +172,7 @@ This table is not exhaustive. For a machine-readable registry of all known event
 | `1222`        | Voice Message                   | [A0](A0.md)                            |
 | `1244`        | Voice Message Comment           | [A0](A0.md)                            |
 | `1311`        | Live Chat Message               | [53](53.md)                            |
+| `1317`        | Agent Bond History              | [BD](BD.md)                            |
 | `1337`        | Code Snippet                    | [C0](C0.md)                            |
 | `1617`        | Patches                         | [34](34.md)                            |
 | `1618`        | Pull Requests                   | [34](34.md)                            |
@@ -265,6 +267,7 @@ This table is not exhaustive. For a machine-readable registry of all known event
 | `30312`       | Interactive Room                | [53](53.md)                            |
 | `30313`       | Conference Event                | [53](53.md)                            |
 | `30315`       | User Statuses                   | [38](38.md)                            |
+| `30317`       | Agent Bond State                | [BD](BD.md)                            |
 | `30382`       | User Trusted Assertion          | [85](85.md)                            |
 | `30383`       | Event Trusted Assertion         | [85](85.md)                            |
 | `30384`       | Addressable Trusted Assertion   | [85](85.md)                            |
