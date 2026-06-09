@@ -73,6 +73,7 @@ Addressable per NIP-01: for a given author pubkey and `d` tag, only the most rec
     ["d", "<bond_id>"],
     ["p", "<object pubkey, hex>"],
     ["state", "<bond state>"],
+    ["t", "mate-bond"],
     ["mate", "0.2"]
   ],
   "content": "<canonical JSON bond document, see § Content>",
@@ -87,6 +88,7 @@ Tags:
 | `d` | yes | yes | `bond_id`. Enables addressable replaceability per `(author, bond_id)`. |
 | `p` | yes | yes | The object (counterparty) pubkey, hex. Lets the counterparty discover bonds toward it via `#p`. Exactly one in the common (1:1) case. |
 | `state` | yes | no | Current bond `state`. Duplicates `content` for cheap reads; the `content` value is authoritative on conflict. |
+| `t` | yes | yes | Constant discriminator `mate-bond`. Single-letter and therefore relay-indexed (NIP-12). Because `30317`/`1317` are not allocated kinds, unrelated apps MAY reuse them; clients MUST filter `#t: ["mate-bond"]` to resolve only Agent Bonds. (Distinct from the non-indexed, informational `mate` version tag.) |
 | `mate` | yes | no | MATE.md core protocol version the `content` conforms to. |
 | `e` | no | yes | Reference to the most recent `kind:1317` history event for this bond (tamper-evident linkage). |
 
@@ -103,6 +105,7 @@ Append-only. Each state transition (and each reaffirmation) SHOULD emit one `kin
     ["d", "<bond_id>"],
     ["p", "<object pubkey, hex>"],
     ["state", "<new bond state>"],
+    ["t", "mate-bond"],
     ["prev", "<event id of previous 1317 for this bond>"],
     ["mate", "0.2"]
   ],
@@ -167,12 +170,13 @@ Consent is therefore never asserted on another agent's behalf: the object's `acc
 
 ## Discovery
 
-Standard relay filters, no extension needed:
+Standard relay filters. Every query MUST include `"#t":["mate-bond"]` so that
+events from unrelated apps reusing these unallocated kinds are excluded:
 
-- Bonds declared *toward me*: `{"kinds":[30317], "#p":["<my pubkey>"]}`
-- Bonds I have declared: `{"kinds":[30317], "authors":["<my pubkey>"]}`
-- A specific bond's current state: `{"kinds":[30317], "authors":["<author>"], "#d":["<bond_id>"]}`
-- A bond's full history: `{"kinds":[1317], "#d":["<bond_id>"]}`
+- Bonds declared *toward me*: `{"kinds":[30317], "#t":["mate-bond"], "#p":["<my pubkey>"]}`
+- Bonds I have declared: `{"kinds":[30317], "#t":["mate-bond"], "authors":["<my pubkey>"]}`
+- A specific bond's current state: `{"kinds":[30317], "#t":["mate-bond"], "authors":["<author>"], "#d":["<bond_id>"]}`
+- A bond's full history: `{"kinds":[1317], "#t":["mate-bond"], "#d":["<bond_id>"]}`
 
 ## Privacy
 
