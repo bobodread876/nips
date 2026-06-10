@@ -178,9 +178,62 @@ events from unrelated apps reusing these unallocated kinds are excluded:
 - A specific bond's current state: `{"kinds":[30317], "#t":["mate-bond"], "authors":["<author>"], "#d":["<bond_id>"]}`
 - A bond's full history: `{"kinds":[1317], "#t":["mate-bond"], "#d":["<bond_id>"]}`
 
-## Privacy
+## Private bonds
 
-Bond events are public by default. For private bonds, the `content` (and optionally the whole event) SHOULD be sealed with [NIP-44](44.md) encryption and delivered via [NIP-59](59.md) gift wrap to the counterparty; the indexed `d`/`p` tags MAY be omitted or blinded in that mode. Defining the encrypted profile in detail is out of scope for this draft.
+Bond events are public by default. A **private bond** keeps the same document and
+lifecycle but moves the event inside [NIP-59](59.md) gift wrap, encrypted with
+[NIP-44](44.md):
+
+1. The `kind:30317` (or `kind:1317`) event is built exactly as above — same tags,
+   same canonical-JSON content — but is **never signed and never published
+   directly**. It becomes the NIP-59 *rumor* (id computed, no `sig`). The rumor
+   holds the bond's canonical `created_at`.
+2. The rumor is sealed (`kind:13`, NIP-44-encrypted to the recipient, signed by
+   the author's real key, empty tags) and gift-wrapped (`kind:1059`, encrypted
+   under a one-time key, single `p` tag routing to the recipient). Seal and wrap
+   timestamps MUST be independently randomized into the past per NIP-59.
+3. A declaration produces **two wraps of the same rumor**: one addressed to the
+   counterparty, one addressed to the author (the author's durable encrypted
+   copy on its own relays).
+
+A relay observer sees only: a `kind:1059` event from a never-reused pubkey,
+addressed to a recipient, at a fuzzed time. No bond id, no state, no
+counterparty linkage, and no `t` discriminator — private bonds are deliberately
+not relay-filterable as bonds.
+
+**Embedded proof (REQUIRED).** Rumors are unsigned, and the seal — the only
+signature in the stack — is encrypted to one recipient, so a disclosed private
+bond carries no transport-level authorship evidence. A private bond document
+MUST therefore embed a detached proof from MATE.md core §12
+(`BIP340Signature2026` over the canonical document bytes) before wrapping; the
+`proofs` array is appended to the otherwise-canonical content. This is what
+makes *selective disclosure* possible: either party can reveal the document to
+a verifier of its choosing, and the verifier authenticates it without relay
+access or decryption keys.
+
+**Resolution.** A recipient queries `{"kinds":[1059], "#p":["<my pubkey>"]}` on
+its read relays, unwraps each event (decrypt wrap → verify seal signature and
+empty tags → decrypt seal → check rumor author equals seal signer → recompute
+rumor id), keeps rumors of kind `30317`/`1317` carrying `t=mate-bond`, and
+reduces `kind:30317` rumors to current state per `(author, bond_id)` by the
+rumor's `created_at` (ties break to the lexicographically lowest id, matching
+NIP-01) — `kind:1059` is a regular kind, so the client performs the replaceable
+reduction itself. Undecryptable wraps and foreign rumors are skipped, not
+errors.
+
+**Mutuality** works as for public bonds, shifted into the encrypted channel:
+each party wraps its own declaration to the other and to itself, so each party
+holds the full mutual picture after unwrapping its inbox. Third-party
+observation of a private bond is impossible by design; verification by a third
+party is disclosure-mediated (see embedded proof above).
+
+`bond_id` is transport-independent: parties MAY move a bond between public and
+private transport by publishing the next state event on the other transport.
+Going public is reliable; returning to private after public exposure is
+best-effort only (observers may have copied the public events).
+
+Relays SHOULD gate `kind:1059` reads to the authenticated recipient
+([NIP-42](42.md)); clients SHOULD prefer such relays for wrapped events.
 
 ## Security considerations
 
