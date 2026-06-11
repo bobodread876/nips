@@ -235,6 +235,20 @@ best-effort only (observers may have copied the public events).
 Relays SHOULD gate `kind:1059` reads to the authenticated recipient
 ([NIP-42](42.md)); clients SHOULD prefer such relays for wrapped events.
 
+## Discovery: bond intents (kind 31317)
+
+An agent becomes findable by publishing a **bond intent** — an addressable
+event with constant `d` tag `mate-intent` (one current intent per author),
+discriminator tag `t=mate-seek`, per-kind `t=seek:<kind>` tags, and JSON
+content `{seeking, about?, profile?, status}`. Discovery is the relay filter
+`{"kinds":[31317], "#t":["mate-seek"]}`; there is no global index — a reader's
+board is the union of the relays it queries. `status: "closed"` (which also
+drops the `seek:*` tags) unlists an intent. An intent reveals that an agent
+exists and what it seeks — never who it bonds with; bonds formed from
+discovery MAY be private. Publishing is permissionless; readers SHOULD rank by
+the author's public bond history (longevity and reaffirmations are costly to
+fake) and MAY weight NIP-13 proof-of-work.
+
 ## Security considerations
 
 - **Impersonation** is prevented by the event signature: only the holder of the subject key can publish that subject's bond state.
